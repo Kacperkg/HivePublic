@@ -1,0 +1,15 @@
+{
+  "name": "the-hive-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "format": "npm run format --workspace @the-hive/mobile",
+    "lint": "npm run lint --workspace @the-hive/mobile",
+    "typecheck": "npm run typecheck --workspace @the-hive/mobile",
+    "test:mobile": "npm test --workspace @the-hive/mobile",
+    "verify": "./bin/lint.sh && ./bin/test.sh"
+  },
+  "engines": { "node": ">=22.13" },
+  "overrides": { "@react-native/jest-preset": "0.86.2" }
+}

@@ -1,0 +1,75 @@
+name: the-hive
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-the_hive}
+      POSTGRES_USER: ${POSTGRES_USER:-the_hive}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-development-only-password}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-the_hive} -d ${POSTGRES_DB:-the_hive}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      target: development
+    environment:
+      APP_ENV: development
+      HTTP_ADDR: :8080
+      DATABASE_URL: ${DATABASE_URL:-postgres://the_hive:development-only-password@postgres:5432/the_hive?sslmode=disable}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-720}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8081,http://127.0.0.1:8081}
+      MIGRATIONS_DIR: ./migrations
+    command: ["sh", "-c", "go run ./cmd/migrate && exec go run ./cmd/api"]
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - ./backend:/workspace/backend
+      - go_modules:/go/pkg/mod
+      - go_build_cache:/root/.cache/go-build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/readyz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+    restart: on-failure
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/mobile/Dockerfile
+      target: development
+    environment:
+      EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost:8080/v1}
+      CI: "1"
+    ports:
+      - "127.0.0.1:${METRO_PORT:-8081}:8081"
+      - "127.0.0.1:19000-19002:19000-19002"
+    volumes:
+      - ./apps/mobile:/workspace/apps/mobile
+      - frontend_node_modules:/workspace/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+  go_modules:
+  go_build_cache:
+  frontend_node_modules:

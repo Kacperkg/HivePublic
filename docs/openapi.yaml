@@ -1,0 +1,353 @@
+openapi: 3.1.0
+info:
+  title: The Hive API
+  version: 0.1.0
+  description: HTTP contract for The Hive mobile application.
+servers:
+  - url: http://localhost:8080/v1
+    description: Local development
+security:
+  - bearerAuth: []
+paths:
+  /auth/register:
+    post:
+      security: []
+      summary: Register and create a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "201": { $ref: "#/components/responses/AuthResponse" }
+        "409": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+  /auth/login:
+    post:
+      security: []
+      summary: Create a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/AuthResponse" }
+        "401": { $ref: "#/components/responses/Error" }
+  /auth/logout:
+    post:
+      summary: Revoke the current session
+      responses:
+        "204": { description: Session revoked }
+        "401": { $ref: "#/components/responses/Error" }
+  /me:
+    get:
+      summary: Get the current profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties: { data: { $ref: "#/components/schemas/User" } }
+        "401": { $ref: "#/components/responses/Error" }
+  /workouts:
+    get:
+      summary: List ordered workout templates
+      responses:
+        "200":
+          description: Workout list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Workout" }
+    post:
+      summary: Create a workout template
+      requestBody: { $ref: "#/components/requestBodies/Workout" }
+      responses:
+        "201": { $ref: "#/components/responses/Workout" }
+        "409": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+  /workouts/{workoutId}:
+    parameters:
+      - $ref: "#/components/parameters/WorkoutId"
+    get:
+      summary: Get a workout template
+      responses:
+        "200": { $ref: "#/components/responses/Workout" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      summary: Replace a workout template
+      description: Existing assignment snapshots are not changed.
+      requestBody: { $ref: "#/components/requestBodies/Workout" }
+      responses:
+        "200": { $ref: "#/components/responses/Workout" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+    delete:
+      summary: Delete a workout template
+      description: Historical assignments are retained with a null sourceWorkoutId.
+      responses:
+        "204": { description: Deleted }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments:
+    get:
+      summary: List assignment summaries in a date range
+      parameters:
+        - { name: from, in: query, required: true, schema: { type: string, format: date } }
+        - { name: to, in: query, required: true, schema: { type: string, format: date } }
+      responses:
+        "200":
+          description: Assignments
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/Assignment" } }
+        "400": { $ref: "#/components/responses/Error" }
+  /assignments/{date}:
+    parameters:
+      - $ref: "#/components/parameters/Date"
+    get:
+      summary: Get an assignment and its set snapshot
+      responses:
+        "200": { $ref: "#/components/responses/Assignment" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      summary: Assign or replace a workout on a date
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workoutId]
+              properties: { workoutId: { type: string, format: uuid } }
+      responses:
+        "200": { $ref: "#/components/responses/Assignment" }
+        "404": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+    delete:
+      summary: Unassign a workout
+      responses:
+        "204": { description: Unassigned }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments/{date}/sets/{setId}:
+    parameters:
+      - $ref: "#/components/parameters/Date"
+      - { name: setId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      summary: Record a completed or skipped set
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SetResult" }
+      responses:
+        "200":
+          description: Updated set
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties: { data: { $ref: "#/components/schemas/AssignmentSet" } }
+        "404": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
+  /assignments/{date}/finalize:
+    parameters:
+      - $ref: "#/components/parameters/Date"
+    post:
+      summary: Finalize an assignment
+      description: Status is completed when no sets remain pending, otherwise incomplete.
+      responses:
+        "200": { $ref: "#/components/responses/Assignment" }
+        "404": { $ref: "#/components/responses/Error" }
+  /dashboard/{date}:
+    parameters:
+      - $ref: "#/components/parameters/Date"
+    get:
+      summary: Get dashboard aggregates for a date
+      responses:
+        "200":
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties: { data: { $ref: "#/components/schemas/Dashboard" } }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: opaque }
+  parameters:
+    WorkoutId: { name: workoutId, in: path, required: true, schema: { type: string, format: uuid } }
+    Date: { name: date, in: path, required: true, schema: { type: string, format: date } }
+  requestBodies:
+    Workout:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/WorkoutInput" }
+  responses:
+    Error:
+      description: Structured error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    AuthResponse:
+      description: Authenticated session
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "#/components/schemas/Auth" } }
+    Workout:
+      description: Workout template
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "#/components/schemas/Workout" } }
+    Assignment:
+      description: Assignment
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties: { data: { $ref: "#/components/schemas/Assignment" } }
+  schemas:
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [firstName, surname, email, password]
+      properties:
+        firstName: { type: string, minLength: 1, maxLength: 80 }
+        surname: { type: string, minLength: 1, maxLength: 80 }
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 10, maxLength: 128 }
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    User:
+      type: object
+      required: [id, firstName, surname, email, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        firstName: { type: string }
+        surname: { type: string }
+        email: { type: string, format: email }
+        createdAt: { type: string, format: date-time }
+    Auth:
+      type: object
+      required: [token, expiresAt, user]
+      properties:
+        token: { type: string }
+        expiresAt: { type: string, format: date-time }
+        user: { $ref: "#/components/schemas/User" }
+    ExerciseInput:
+      type: object
+      additionalProperties: false
+      required: [name, setCount, targetReps, targetWeightKg]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        setCount: { type: integer, minimum: 1, maximum: 20 }
+        targetReps: { type: integer, minimum: 1, maximum: 100 }
+        targetWeightKg: { type: number, minimum: 0, maximum: 99999.99 }
+    Exercise:
+      allOf:
+        - $ref: "#/components/schemas/ExerciseInput"
+        - type: object
+          required: [id, position]
+          properties:
+            id: { type: string, format: uuid }
+            position: { type: integer, minimum: 1 }
+    WorkoutInput:
+      type: object
+      additionalProperties: false
+      required: [name, exercises]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        exercises: { type: array, minItems: 1, maxItems: 50, items: { $ref: "#/components/schemas/ExerciseInput" } }
+    Workout:
+      type: object
+      required: [id, name, position, exercises, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        position: { type: integer }
+        exercises: { type: array, items: { $ref: "#/components/schemas/Exercise" } }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    AssignmentSet:
+      type: object
+      required: [id, exercisePosition, exerciseName, setNumber, targetReps, targetWeightKg, status]
+      properties:
+        id: { type: string, format: uuid }
+        exercisePosition: { type: integer }
+        exerciseName: { type: string }
+        setNumber: { type: integer }
+        targetReps: { type: integer }
+        targetWeightKg: { type: number }
+        actualReps: { type: [integer, "null"] }
+        actualWeightKg: { type: [number, "null"] }
+        status: { type: string, enum: [pending, completed, skipped] }
+    Assignment:
+      type: object
+      required: [id, sourceWorkoutId, workoutName, scheduledDate, status, sets]
+      properties:
+        id: { type: string, format: uuid }
+        sourceWorkoutId: { type: [string, "null"], format: uuid }
+        workoutName: { type: string }
+        scheduledDate: { type: string, format: date }
+        status: { type: string, enum: [planned, completed, incomplete] }
+        sets: { type: array, items: { $ref: "#/components/schemas/AssignmentSet" } }
+    SetResult:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: { type: string, enum: [completed, skipped] }
+        actualReps: { type: integer, minimum: 0, maximum: 100 }
+        actualWeightKg: { type: number, minimum: 0, maximum: 99999.99 }
+    Dashboard:
+      type: object
+      required: [date, activityName, assignmentId, status, exercisesCompleted, totalExercises, repetitionsCompleted, totalRepetitions, weightPushedKg]
+      properties:
+        date: { type: string, format: date }
+        activityName: { type: string }
+        assignmentId: { type: [string, "null"], format: uuid }
+        status: { type: string, enum: [rest, planned, completed, incomplete] }
+        exercisesCompleted: { type: integer }
+        totalExercises: { type: integer }
+        repetitionsCompleted: { type: integer }
+        totalRepetitions: { type: integer }
+        weightPushedKg: { type: number }
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            fields: { type: object, additionalProperties: { type: string } }

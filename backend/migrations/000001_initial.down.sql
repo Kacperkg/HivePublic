@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS assignment_sets;
+DROP TABLE IF EXISTS assignments;
+DROP TABLE IF EXISTS exercises;
+DROP TABLE IF EXISTS workouts;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS users;
