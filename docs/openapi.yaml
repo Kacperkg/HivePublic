@@ -311,10 +311,11 @@ components:
         status: { type: string, enum: [pending, completed, skipped] }
     Assignment:
       type: object
-      required: [id, sourceWorkoutId, workoutName, scheduledDate, status, sets]
+      required: [id, sourceWorkoutId, workoutPosition, workoutName, scheduledDate, status, sets]
       properties:
         id: { type: string, format: uuid }
         sourceWorkoutId: { type: [string, "null"], format: uuid }
+        workoutPosition: { type: integer, minimum: 1 }
         workoutName: { type: string }
         scheduledDate: { type: string, format: date }
         status: { type: string, enum: [planned, completed, incomplete] }

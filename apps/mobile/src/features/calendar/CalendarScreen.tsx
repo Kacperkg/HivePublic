@@ -9,6 +9,7 @@ import { StateView } from "@/components/StateView";
 import { api } from "@/api/endpoints";
 import { colors, radii, spacing, tabBarHeight } from "@/theme/tokens";
 import { monthBounds, toDateKey } from "@/utils/date";
+import { toRoman } from "@/utils/roman";
 
 export function CalendarScreen() {
   const client = useQueryClient();
@@ -99,7 +100,10 @@ export function CalendarScreen() {
                   onPress={() => setSelected(date)}
                 />
               ) : (
-                <View key={`blank-${index}`} style={styles.day} />
+                <View
+                  key={`blank-${index}`}
+                  style={[styles.day, styles.placeholderDay]}
+                />
               ),
             )}
           </View>
@@ -181,7 +185,13 @@ function Day({
 }: {
   date: Date;
   selected: boolean;
-  assignment: { sourceWorkoutId: string | null; status: string } | undefined;
+  assignment:
+    | {
+        sourceWorkoutId: string | null;
+        workoutPosition: number;
+        status: string;
+      }
+    | undefined;
   onPress(): void;
 }) {
   const key = toDateKey(date);
@@ -209,7 +219,7 @@ function Day({
             missed && styles.missed,
           ]}
         >
-          {assignment.sourceWorkoutId ? "•" : ""}
+          {toRoman(assignment.workoutPosition)}
         </Text>
       ) : (
         <Text style={styles.assignment}> </Text>
@@ -277,6 +287,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 2,
     borderColor: colors.border,
+  },
+  placeholderDay: {
+    borderWidth: 0,
+    backgroundColor: "transparent",
   },
   today: { backgroundColor: "rgba(220,20,60,0.30)" },
   selected: { backgroundColor: colors.primary },

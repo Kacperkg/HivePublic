@@ -170,7 +170,7 @@ There is deliberately no shared generated-code package yet. The OpenAPI document
 ## Ambiguities and inconsistencies resolved
 
 - The old “Gym Report” screen is a template manager. The visible label remains unchanged for parity; internal names use `WorkoutLibrary`.
-- Workout IDs were Roman numerals and edit code sometimes addressed documents by workout name. The rewrite uses UUIDs; Roman numerals are display-only stable ordering.
+- Workout IDs were Roman numerals and edit code sometimes addressed documents by workout name. The rewrite uses UUIDs internally and snapshots the workout's ordered position so calendar assignments retain their Roman-numeral marker.
 - Deleting a workout compared assignment objects to a string ID and therefore did not reliably detach assignments. PostgreSQL foreign keys and an explicit transactional delete resolve this.
 - `setCount` held the number of exercises, not sets. It is removed; counts are derived.
 - Editing a template could mutate or fail to find the wrong Firebase document. Updates now use immutable UUIDs.

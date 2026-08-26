@@ -37,7 +37,7 @@ Passwords are hashed with bcrypt. Login and registration issue high-entropy opaq
 
 ## Assignment snapshots
 
-Assigning a workout creates an assignment and set rows in one transaction. Exercise names, order, target reps and target weight are copied into the assignment snapshot. Later template edits do not alter already planned or partially completed workouts. Deleting a template leaves historical assignments intact by setting their source workout reference to null.
+Assigning a workout creates an assignment and set rows in one transaction. The workout name and Roman-numeral position, plus exercise names, order, target reps, and target weight, are copied into the assignment snapshot. Later template edits or reordering do not alter already planned or partially completed workouts. Deleting a template leaves historical assignments intact by setting only their source workout reference to null.
 
 ## PostgreSQL design
 

@@ -12,7 +12,7 @@ import (
 
 func (s *Store) ListAssignments(ctx context.Context, userID string, from, to time.Time) ([]domain.Assignment, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, source_workout_id, workout_name, scheduled_date::text, status
+		SELECT id, source_workout_id, workout_position, workout_name, scheduled_date::text, status
 		FROM assignments
 		WHERE user_id = $1 AND scheduled_date BETWEEN $2 AND $3
 		ORDER BY scheduled_date`, userID, from, to)
@@ -23,7 +23,7 @@ func (s *Store) ListAssignments(ctx context.Context, userID string, from, to tim
 	assignments := make([]domain.Assignment, 0)
 	for rows.Next() {
 		var assignment domain.Assignment
-		if err := rows.Scan(&assignment.ID, &assignment.SourceWorkoutID, &assignment.WorkoutName,
+		if err := rows.Scan(&assignment.ID, &assignment.SourceWorkoutID, &assignment.WorkoutPosition, &assignment.WorkoutName,
 			&assignment.ScheduledDate, &assignment.Status); err != nil {
 			return nil, err
 		}
@@ -36,9 +36,9 @@ func (s *Store) ListAssignments(ctx context.Context, userID string, from, to tim
 func (s *Store) GetAssignment(ctx context.Context, userID string, date time.Time) (domain.Assignment, error) {
 	var assignment domain.Assignment
 	err := s.db.QueryRowContext(ctx, `
-		SELECT id, source_workout_id, workout_name, scheduled_date::text, status
+		SELECT id, source_workout_id, workout_position, workout_name, scheduled_date::text, status
 		FROM assignments WHERE user_id = $1 AND scheduled_date = $2`, userID, date).Scan(
-		&assignment.ID, &assignment.SourceWorkoutID, &assignment.WorkoutName, &assignment.ScheduledDate, &assignment.Status)
+		&assignment.ID, &assignment.SourceWorkoutID, &assignment.WorkoutPosition, &assignment.WorkoutName, &assignment.ScheduledDate, &assignment.Status)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Assignment{}, ErrNotFound
 	}
@@ -60,7 +60,8 @@ func (s *Store) AssignWorkout(ctx context.Context, userID, workoutID string, dat
 		return domain.Assignment{}, err
 	}
 	var workoutName string
-	err = tx.QueryRowContext(ctx, `SELECT name FROM workouts WHERE id = $1 AND user_id = $2`, workoutID, userID).Scan(&workoutName)
+	var workoutPosition int
+	err = tx.QueryRowContext(ctx, `SELECT name, position FROM workouts WHERE id = $1 AND user_id = $2`, workoutID, userID).Scan(&workoutName, &workoutPosition)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Assignment{}, ErrNotFound
 	}
@@ -76,11 +77,11 @@ func (s *Store) AssignWorkout(ctx context.Context, userID, workoutID string, dat
 	}
 	var assignment domain.Assignment
 	err = tx.QueryRowContext(ctx, `
-		INSERT INTO assignments (id, user_id, source_workout_id, workout_name, scheduled_date)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, source_workout_id, workout_name, scheduled_date::text, status`,
-		assignmentID, userID, workoutID, workoutName, date).Scan(
-		&assignment.ID, &assignment.SourceWorkoutID, &assignment.WorkoutName, &assignment.ScheduledDate, &assignment.Status)
+		INSERT INTO assignments (id, user_id, source_workout_id, workout_position, workout_name, scheduled_date)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, source_workout_id, workout_position, workout_name, scheduled_date::text, status`,
+		assignmentID, userID, workoutID, workoutPosition, workoutName, date).Scan(
+		&assignment.ID, &assignment.SourceWorkoutID, &assignment.WorkoutPosition, &assignment.WorkoutName, &assignment.ScheduledDate, &assignment.Status)
 	if err != nil {
 		return domain.Assignment{}, err
 	}

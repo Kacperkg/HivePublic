@@ -39,6 +39,7 @@ export type AssignmentSet = {
 export type Assignment = {
   id: string;
   sourceWorkoutId: string | null;
+  workoutPosition: number;
   workoutName: string;
   scheduledDate: string;
   status: "planned" | "completed" | "incomplete";

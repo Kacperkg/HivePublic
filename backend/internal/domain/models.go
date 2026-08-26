@@ -47,6 +47,7 @@ type AssignmentSet struct {
 type Assignment struct {
 	ID              string          `json:"id"`
 	SourceWorkoutID *string         `json:"sourceWorkoutId"`
+	WorkoutPosition int             `json:"workoutPosition"`
 	WorkoutName     string          `json:"workoutName"`
 	ScheduledDate   string          `json:"scheduledDate"`
 	Status          string          `json:"status"`
