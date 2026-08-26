@@ -2,6 +2,8 @@
 
 The Hive is a dark, iPhone-first workout planner for building consistent training behavior. It combines reusable workout templates, calendar scheduling, set-by-set execution, rest timing, and daily progress totals without changing the visual identity of the original product concept.
 
+The project began as a university dissertation application. After the dissertation was completed, the original prototype was audited, cleaned up, and comprehensively rebuilt to improve its architecture, security, reliability, developer experience, and suitability for public release while retaining its established product identity.
+
 This repository is a ground-up, public-quality rewrite: Expo/React Native and strict TypeScript on the client, a small Go API, PostgreSQL persistence, versioned migrations, and a reproducible Docker development environment.
 
 <table>
@@ -80,7 +82,7 @@ This builds and starts:
 
 - Expo/Metro on `http://localhost:8081`
 - the API on `http://localhost:8080`
-- PostgreSQL on `localhost:5432`
+- PostgreSQL on `localhost:5433`
 
 The API waits for PostgreSQL health, applies pending migrations, and then starts. It still retries its own database connection because container order alone is not readiness.
 
@@ -196,7 +198,3 @@ Core rewrite functionality is implemented and automated checks pass. Onboarding 
 ## Security
 
 Please report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). Do not include live credentials or personal data in an issue.
-
-## License
-
-Code is available under the [MIT License](LICENSE). The onboarding collage is retained with repository-owner approval but must have its underlying photography rights confirmed before redistribution.
