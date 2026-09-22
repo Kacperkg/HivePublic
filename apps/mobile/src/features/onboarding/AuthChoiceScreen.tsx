@@ -1,38 +1,27 @@
-import {
-  Image,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "@/navigation/types";
 import { Screen } from "@/components/Screen";
 import { BrandLockup } from "@/components/BrandLockup";
 import { Button } from "@/components/Button";
+import { OnboardingHero } from "@/features/onboarding/OnboardingHero";
 import { colors, spacing } from "@/theme/tokens";
 
 export function AuthChoiceScreen({
   navigation,
 }: NativeStackScreenProps<AuthStackParamList, "AuthChoice">) {
-  const { height } = useWindowDimensions();
   return (
-    <Screen
-      scroll
-      edges={["left", "right", "bottom"]}
-      contentStyle={styles.content}
-    >
-      <Image
-        accessibilityIgnoresInvertColors
-        source={require("../../../assets/images/onboarding-collage.png")}
-        style={[styles.hero, { maxHeight: Math.max(350, height * 0.54) }]}
-        resizeMode="cover"
-      />
-      <View style={styles.copy}>
-        <BrandLockup />
-        <Text style={styles.description}>
-          Build better behaviours, not fatigue, frustration and failure.
-        </Text>
+    <Screen scroll edges={["bottom"]} contentStyle={styles.content}>
+      <View style={styles.intro}>
+        <OnboardingHero maxHeightFraction={0.6} />
+        <View style={styles.copy}>
+          <BrandLockup />
+          <Text style={styles.description}>
+            Build better behaviours, not fatigue, frustration and failure.
+          </Text>
+        </View>
+      </View>
+      <View style={styles.actions}>
         <Button label="LOGIN" onPress={() => navigation.navigate("Login")} />
         <Button
           label="REGISTER"
@@ -45,21 +34,16 @@ export function AuthChoiceScreen({
   );
 }
 const styles = StyleSheet.create({
-  content: { justifyContent: "center" },
-  hero: {
-    width: "100%",
-    aspectRatio: 402 / 594,
-    marginTop: -48,
-    marginBottom: spacing.lg,
-  },
-  copy: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
+  content: { width: "100%", justifyContent: "space-between" },
+  intro: { width: "100%" },
+  copy: { paddingHorizontal: spacing.lg },
+  actions: { paddingHorizontal: spacing.md, paddingBottom: spacing.xs },
   description: {
     color: colors.text,
     fontSize: 16,
     lineHeight: 23,
     fontWeight: "500",
-    marginTop: spacing.lg,
-    marginBottom: 40,
+    marginTop: spacing.sm,
   },
   secondary: { marginTop: spacing.xs, borderRadius: 0 },
 });
