@@ -40,23 +40,37 @@ export function WorkoutPreviewScreen({
       query.data.sets.map((set) => [set.exercisePosition, set.exerciseName]),
     ).entries(),
   );
+  const remaining = query.data.sets.filter((set) => set.status === "pending");
+  const totalSets = query.data.sets.length;
   return (
     <Screen contentStyle={styles.content}>
       <View style={styles.top}>
         <BackButton />
         <Text style={styles.name}>{query.data.workoutName}</Text>
-        <Text style={styles.count}>{exercises.length} Exercises</Text>
+        <Text style={styles.count}>
+          {exercises.length} Exercises · {totalSets} Sets
+        </Text>
       </View>
       <View style={styles.list}>
         {exercises.map(([position, name]) => (
           <View key={position} style={styles.exercise}>
             <WorkoutNumber number={position} />
             <Text style={styles.exerciseName}>{name}</Text>
+            <Text style={styles.setCount}>
+              {
+                query.data.sets.filter(
+                  (set) => set.exercisePosition === position,
+                ).length
+              }{" "}
+              sets
+            </Text>
           </View>
         ))}
       </View>
       <Button
-        label="NEXT"
+        label={
+          remaining.length < totalSets ? "RESUME WORKOUT" : "START WORKOUT"
+        }
         onPress={() => navigation.navigate("TimerSetup", { date })}
       />
     </Screen>
@@ -89,5 +103,6 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: spacing.xs,
   },
-  exerciseName: { color: colors.text, fontSize: 16 },
+  exerciseName: { color: colors.text, fontSize: 16, flex: 1 },
+  setCount: { color: colors.textSubtle, fontSize: 13 },
 });
