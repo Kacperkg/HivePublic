@@ -55,7 +55,6 @@ services:
       target: development
     environment:
       EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost:8080/v1}
-      CI: "1"
     ports:
       - "127.0.0.1:${METRO_PORT:-8081}:8081"
       - "127.0.0.1:19000-19002:19000-19002"
